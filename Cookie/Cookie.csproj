@@ -65,6 +65,7 @@
     <Compile Include="Commands\Commands\KamasCommand.cs" />
     <Compile Include="Commands\Commands\LevelCommand.cs" />
     <Compile Include="Commands\Commands\LoadIACommand.cs" />
+    <Compile Include="Commands\Commands\LoadLUACommand.cs" />
     <Compile Include="Commands\Commands\MapCommand.cs" />
     <Compile Include="Commands\Commands\PathCommand.cs" />
     <Compile Include="Commands\Exceptions\CommandNotFoundException.cs" />
@@ -111,6 +112,11 @@
     <Compile Include="Game\Party\Party.cs" />
     <Compile Include="Core\Pathmanager\PathManager.cs" />
     <Compile Include="Core\Character.cs" />
+    <Compile Include="LUA\Commands\BaseLUA.cs" />
+    <Compile Include="LUA\Commands\LoggerLUA.cs" />
+    <Compile Include="LUA\Commands\MapLUA.cs" />
+    <Compile Include="LUA\DataLUA.cs" />
+    <Compile Include="LUA\ScriptLoader.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
