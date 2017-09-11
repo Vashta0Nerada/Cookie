@@ -23,6 +23,8 @@ namespace Cookie.Game.Jobs
     {
         private readonly IAccount _account;
 
+        public event EventHandler GatherFinished;
+
         public GatherManager(IAccount account)
         {
             _account = account;
@@ -41,6 +43,21 @@ namespace Cookie.Game.Jobs
                 MessagePriority.Normal);
             _account.Network.RegisterPacket<InteractiveMapUpdateMessage>(HandleInteractiveMapUpdateMessage,
                 MessagePriority.Normal);
+            _account.Network.RegisterPacket<InteractiveUseErrorMessage>(HandleInteractiveUseErrorMessage,
+                MessagePriority.Normal);
+            _account.Network.RegisterPacket<InteractiveUseEndedMessage>(HandleInteractiveUseEndedMessage,
+                MessagePriority.Normal);
+        }
+
+        private void HandleInteractiveUseEndedMessage(IAccount arg1, InteractiveUseEndedMessage arg2)
+        {
+            Gather();
+        }
+
+        private void HandleInteractiveUseErrorMessage(IAccount arg1, InteractiveUseErrorMessage arg2)
+        {
+            Logger.Default.Log("Une erreur est survenue lors de la récolte, nouvel essai.");
+            Gather();
         }
 
         private ICellMovement Move { get; set; }
@@ -89,16 +106,22 @@ namespace Cookie.Game.Jobs
                     if (usableElement.Value.Element.Id != interactiveElement.Id ||
                         !interactiveElement.IsUsable) continue;
                     if (interactiveElement.TypeId != ressourceId ||
-                        !_account.Character.Map.NoEntitiesOnCell(usableElement.Value.CellId))
+                        !_account.Character.Map.NoEntitiesOnCell(usableElement.Value.CellId) ||
+                        _account.Character.Map.MoveToElement((int) interactiveElement.Id, 1) == null)
                         continue;
                     listUsableElement.Add(usableElement.Value);
                     listDistance.Add(GetRessourceDistance((int) usableElement.Value.Element.Id));
                 }
-                if (listDistance.Count <= 0) return;
+                if (listDistance.Count <= 0)
+                {
+                    GatherFinished?.Invoke(_account, new EventArgs());
+                    return;
+                }
                 foreach (var usableElement in TrierDistanceElement(listDistance, listUsableElement))
                 {
                     if (GetRessourceDistance((int) usableElement.Element.Id) == 1 || IsFishing)
                     {
+                        Logger.Default.Log("Récolte de " + D2OParsing.GetInteractiveName(usableElement.Element.TypeId) + " commencée. (CellID=" + usableElement.CellId.ToString() + ", ElementID=" + usableElement.Element.Id.ToString() + ")");
                         if (Moved)
                             _account.Character.Map.UseElement(Id, SkillInstanceUid);
                         else
@@ -111,7 +134,10 @@ namespace Cookie.Game.Jobs
                     }
                     Id = (int) usableElement.Element.Id;
                     SkillInstanceUid = usableElement.Skills[0].SkillInstanceUid;
+                    if(Move != null)
+                        Move.MovementFinished -= OnMovementFinished;
                     Move = _account.Character.Map.MoveToElement(Id, 1);
+                    Logger.Default.Log("Déplacement vers la ressources cellid=" + usableElement.CellId.ToString());
                     Move.MovementFinished += OnMovementFinished;
                     Move.PerformMovement();
                     break;
@@ -178,27 +204,11 @@ namespace Cookie.Game.Jobs
             Move.MovementFinished -= OnMovementFinished;
             if (args.Sucess)
             {
-                _account.Character.Map.UseElement(Id, SkillInstanceUid);
-                _account.PerformAction(() =>
-                {
-                    if (CanGatherOnMap(ToGather))
-                    {
-                        Gather();
-                    }
-                    else
-                    {
-                        if (_account.Character.PathManager.Launched)
-                            _account.Character.PathManager.DoAction();
-                    }
-                }, 5000);
+                Gather();
             }
             else
             {
-                _account.PerformAction(() =>
-                {
-                    if (_account.Character.PathManager.Launched)
-                        _account.Character.PathManager.DoAction();
-                }, 5000);
+                Logger.Default.Log("Déplacement refusé");
             }
         }
 

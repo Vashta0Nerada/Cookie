@@ -46,6 +46,7 @@ using Cookie.Game.Inventory;
 using Cookie.Game.Jobs;
 using Cookie.Game.Map;
 using Cookie.Game.Party;
+using Cookie.LUA;
 using Achievement = Cookie.Game.Achievement.Achievement;
 
 namespace Cookie.Core
@@ -74,6 +75,8 @@ namespace Cookie.Core
             Guild = new Guild(Account);
             Inventory = new Inventory(Account);
             Party = new Party(Account);
+
+            ScriptManager = new ScriptManager(Account, this);
 
             #region Choice Handler
 
@@ -184,6 +187,7 @@ namespace Cookie.Core
         public List<JobExperience> Jobs { get; set; }
         public IGatherManager GatherManager { get; set; }
         public IPathManager PathManager { get; set; }
+        public IScriptManager ScriptManager { get; set; }
 
         public string GetSkinUrl(string mode, int orientation, int width, int height, int zoom)
         {

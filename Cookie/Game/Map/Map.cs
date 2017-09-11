@@ -266,7 +266,8 @@ namespace Cookie.Game.Map
                 Label_00A8:
                 pathFinding = new Pathfinder(_account.Character.Map);
                 var path2 = pathFinding.FindPath(_account.Character.CellId, point.CellId);
-                if (path2 == null) continue;
+                if (path2 == null)
+                    continue;
                 path = path2;
                 savDistance = distance;
             }

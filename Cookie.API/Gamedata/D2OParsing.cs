@@ -53,6 +53,12 @@ namespace Cookie.API.Gamedata
             return FastD2IReader.Instance.GetText(Convert.ToInt32(id));
         }
 
+        public static string GetInteractiveName(int interactiveId)
+        {
+            var objectValue = RuntimeHelpers.GetObjectValue(ObjectDataManager.Instance.Get<Interactive>(interactiveId).NameId);
+            return FastD2IReader.Instance.GetText(Convert.ToInt32(objectValue));
+        }
+
         public static Image GFXItem(uint GID)
         {
             var id = RuntimeHelpers.GetObjectValue(ObjectDataManager.Instance.Get<Item>(GID).IconId);

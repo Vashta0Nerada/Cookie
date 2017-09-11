@@ -10,13 +10,9 @@ namespace Cookie.Commands.Commands
         public string CommandName => "loadlua";
         public string ArgsName => "string [path]";
 
-        private ScriptManager loader;
-
         public void OnCommand(IAccount account, string[] args)
         {
-            if(loader == null)
-                loader = new ScriptManager(account);
-            loader.LoadScript(args[0]);
+            account.Character.ScriptManager.LoadScript(args[0]);
         }
     }
 }

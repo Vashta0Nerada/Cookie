@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Cookie.API.Game.Map.Elements;
+using System;
 
 namespace Cookie.API.Game.Jobs
 {
@@ -26,5 +27,7 @@ namespace Cookie.API.Game.Jobs
 
         List<IUsableElement> TrierDistanceElement(List<int> listDistance,
             List<IUsableElement> listUsableElement);
+
+        event EventHandler GatherFinished;
     }
 }

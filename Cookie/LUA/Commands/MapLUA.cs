@@ -69,6 +69,7 @@ namespace Cookie.LUA.Commands
 
             if (move == null) return;
             move.PerformChangement();
+            Data.Account.Character.ScriptManager.WaitingForMapChange = true;
         }
     }
 }

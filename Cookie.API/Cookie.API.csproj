@@ -50,6 +50,7 @@
     <Compile Include="Core\Frames\ILatencyFrame.cs" />
     <Compile Include="Core\IAccount.cs" />
     <Compile Include="Core\ICharacter.cs" />
+    <Compile Include="Core\IScriptManager.cs" />
     <Compile Include="Core\Network\INetwork.cs" />
     <Compile Include="Gamedata\D2i\FastD2I.cs" />
     <Compile Include="Gamedata\D2i\FastD2IReader.cs" />

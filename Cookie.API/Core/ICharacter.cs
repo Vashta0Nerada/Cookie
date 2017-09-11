@@ -130,6 +130,8 @@ namespace Cookie.API.Core
 
         IPathManager PathManager { get; set; }
 
+        IScriptManager ScriptManager { get; set; }
+
         IAchievement Achievement { get; set; }
 
         IAlliance Alliance { get; set; }
