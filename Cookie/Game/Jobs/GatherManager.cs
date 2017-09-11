@@ -56,8 +56,17 @@ namespace Cookie.Game.Jobs
 
         private void HandleInteractiveUseErrorMessage(IAccount arg1, InteractiveUseErrorMessage arg2)
         {
-            Logger.Default.Log("Une erreur est survenue lors de la récolte, nouvel essai.");
-            Gather();
+            if (IsFinished)
+                return;
+            if(ErrorCount >= 3)
+            {
+                IsFinished = true;
+                GatherFinished?.Invoke(_account, new EventArgs());
+                return;
+            }
+            ErrorCount++;
+            Logger.Default.Log("Une erreur est survenue lors de la récolte, nouvel essai dans 2 secondes.");
+            _account.PerformAction(Gather, 2000);
         }
 
         private ICellMovement Move { get; set; }
@@ -71,6 +80,8 @@ namespace Cookie.Game.Jobs
         public bool Launched { get; set; }
         public List<int> ToGather { get; set; }
         public bool AutoGather { get; set; }
+        public bool IsFinished { get; set; }
+        public int ErrorCount { get; set; }
 
         public void Launch()
         {
@@ -89,8 +100,13 @@ namespace Cookie.Game.Jobs
             AutoGather = !arg;
         }
 
-        public void Gather(List<int> @params, bool autoGather)
+        public void Gather(List<int> @params, bool autoGather, bool resetCounters = false)
         {
+            if(resetCounters)
+            {
+                ErrorCount = 0;
+                IsFinished = false;
+            }
             if (@params.Count < 1) return;
             Launched = true;
             AutoGather = autoGather;
@@ -114,7 +130,11 @@ namespace Cookie.Game.Jobs
                 }
                 if (listDistance.Count <= 0)
                 {
-                    GatherFinished?.Invoke(_account, new EventArgs());
+                    if (!IsFinished)
+                    {
+                        IsFinished = true;
+                        GatherFinished?.Invoke(_account, new EventArgs());
+                    }
                     return;
                 }
                 foreach (var usableElement in TrierDistanceElement(listDistance, listUsableElement))

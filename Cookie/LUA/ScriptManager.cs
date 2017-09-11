@@ -145,7 +145,7 @@ namespace Cookie.LUA
             }
 
             Logger.Default.Log("Démarrage de la récolte des éléments suivants : " + string.Join(", ", list) + ".");
-            data.Account.Character.GatherManager.Gather(list, false);
+            data.Account.Character.GatherManager.Gather(list, false, true);
         }
 
         private void ProcessDoor()

@@ -21,7 +21,7 @@ namespace Cookie.API.Game.Jobs
 
         void Gather();
 
-        void Gather(List<int> resourcesId, bool autoGather);
+        void Gather(List<int> resourcesId, bool autoGather, bool resetCounters = false);
 
         bool CanGatherOnMap(List<int> ids);
 
