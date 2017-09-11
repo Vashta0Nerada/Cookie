@@ -34,9 +34,9 @@ namespace Cookie.Game.Map
                 return;
             }
 
+            _timeoutTimer.Start();
             _cellMovement.MovementFinished += _cellMovement_MovementFinished;
             _cellMovement.PerformMovement();
-            _timeoutTimer.Start();
         }
 
         public event EventHandler<MapChangementFinishedEventArgs> ChangementFinished;

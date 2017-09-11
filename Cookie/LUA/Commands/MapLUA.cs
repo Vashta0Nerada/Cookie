@@ -14,6 +14,7 @@ namespace Cookie.LUA.Commands
     class MapLUA : BaseLUA
     {
         private AutoResetEvent _messageReceived;
+        private bool GoToCell_Result;
 
         public MapLUA(DataLUA data) : base(data)
         {
@@ -28,28 +29,46 @@ namespace Cookie.LUA.Commands
         public bool GoToCell(int cell)
         {
             if (cell <= 0 || cell >= 560) return false;
+            GoToCell_Result = false;
             var movement = Data.Account.Character.Map.MoveToCell(cell);
-            movement.MovementFinished += OnMovementFinished;
+            movement.MovementFinished += GoToCell_OnMovementFinished;
             movement.PerformMovement();
             
-            this._messageReceived.WaitOne(5000);
+            this._messageReceived.WaitOne(10000);
 
-            return true;
+            return GoToCell_Result;
         }
 
-        private void OnMovementFinished(object sender, CellMovementEventArgs e)
+        private void GoToCell_OnMovementFinished(object sender, CellMovementEventArgs e)
         {
-            switch (e.Sucess)
+            GoToCell_Result = e.Sucess;
+
+            this._messageReceived.Set();
+        }
+
+        public void ChangeMap(string direction, int cellID = -1)
+        {
+            IMapChangement move = null;
+            switch (direction)
             {
-                case true:
-                    Logger.Default.Log($"Déplacement réussi ! Cell d'arrivé: {e.EndCell}");
+                case "top":
+                case "up":
+                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.North, cellID);
                     break;
-                case false:
-                    Logger.Default.Log($"Echec du déplacement :'( StartCell: {e.StartCell} -> EndCell: {e.EndCell}");
+                case "left":
+                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.West, cellID);
+                    break;
+                case "right":
+                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.East, cellID);
+                    break;
+                case "bottom":
+                case "down":
+                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.South, cellID);
                     break;
             }
 
-            this._messageReceived.Set();
+            if (move == null) return;
+            move.PerformChangement();
         }
     }
 }

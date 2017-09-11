@@ -116,7 +116,7 @@
     <Compile Include="LUA\Commands\LoggerLUA.cs" />
     <Compile Include="LUA\Commands\MapLUA.cs" />
     <Compile Include="LUA\DataLUA.cs" />
-    <Compile Include="LUA\ScriptLoader.cs" />
+    <Compile Include="LUA\ScriptManager.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

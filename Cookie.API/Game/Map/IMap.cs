@@ -68,7 +68,7 @@ namespace Cookie.API.Game.Map
         /// <summary>Change de carte vers la direction indiquée, en utilisant MoveToCell et MapChange</summary>
         /// <param name="direction">Direction dans laquelle changer de carte</param>
         /// <returns>True si le personnage se déplace ou change de carte, sinon false</returns>
-        IMapChangement ChangeMap(MapDirectionEnum direction);
+        IMapChangement ChangeMap(MapDirectionEnum direction, int cellID = -1);
 
         /// <summary>Se déplace sur la cellule indiquée</summary>
         /// <param name="cellId">Cellule sur laquelle se déplacer</param>

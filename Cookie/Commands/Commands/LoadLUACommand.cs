@@ -10,13 +10,13 @@ namespace Cookie.Commands.Commands
         public string CommandName => "loadlua";
         public string ArgsName => "string [path]";
 
-        private ScriptLoader loader;
+        private ScriptManager loader;
 
         public void OnCommand(IAccount account, string[] args)
         {
-            loader = new ScriptLoader(account);
+            if(loader == null)
+                loader = new ScriptManager(account);
             loader.LoadScript(args[0]);
-            Logger.Default.Log($"Vous êtes niveau {account.Character.Level}.");
         }
     }
 }

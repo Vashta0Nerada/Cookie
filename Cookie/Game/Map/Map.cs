@@ -153,7 +153,7 @@ namespace Cookie.Game.Map
             movement.PerformMovement();
         }
 
-        public IMapChangement ChangeMap(MapDirectionEnum direction)
+        public IMapChangement ChangeMap(MapDirectionEnum direction, int cellID = -1)
         {
             var neighbourId = -1;
             var num2 = -1;
@@ -178,14 +178,17 @@ namespace Cookie.Game.Map
             }
 
             if (num2 == -1 || neighbourId < 0) return null;
-            var list = new List<int>();
-            var num4 = ((API.Gamedata.D2p.Map) Data).Cells.Count - 1;
+            if (cellID == -1)
+            {
+                var list = new List<int>();
+                var num4 = ((API.Gamedata.D2p.Map)Data).Cells.Count - 1;
 
-            for (var i = 0; i < num4; i++)
-                if ((((API.Gamedata.D2p.Map) Data).Cells[i].MapChangeData & num2) > 0 && NothingOnCell(i))
-                    list.Add(i);
-            var randomCellId = list[Randomize.GetRandomNumber(0, list.Count)];
-            var move = MoveToCell(randomCellId);
+                for (var i = 0; i < num4; i++)
+                    if ((((API.Gamedata.D2p.Map)Data).Cells[i].MapChangeData & num2) > 0 && NothingOnCell(i))
+                        list.Add(i);
+                cellID = list[Randomize.GetRandomNumber(0, list.Count)];
+            }
+            var move = MoveToCell(cellID);
             return new MapChangement(_account, move, neighbourId);
         }
 
