@@ -241,13 +241,13 @@ namespace Cookie.Game.Inventory
         private void HandleObtainedItemMessage(IAccount account, ObtainedItemMessage message)
         {
             Logger.Default.Log(
-                $"Tu as reçu :{FastD2IReader.Instance.GetText(ObjectDataManager.Instance.Get<Item>(message.GenericId).NameId)} x {message.BaseQuantity}");
+                $"Vous avez reçu : {FastD2IReader.Instance.GetText(ObjectDataManager.Instance.Get<Item>(message.GenericId).NameId)} x {message.BaseQuantity}");
         }
 
         private void HandleGoldAddedMessage(IAccount account, GoldAddedMessage message)
         {
             Logger.Default.Log(
-                $"Tu as reçu : {message.Gold}");
+                $"Vous avez reçu : {message.Gold}");
         }
 
         #endregion

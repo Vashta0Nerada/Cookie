@@ -93,8 +93,8 @@ namespace Cookie.LUA
             }
 
             _currentMapTable = matching;
-            
-            ProcessCustom();
+
+            data.Account.PerformAction(ProcessCustom, 10);
         }
 
         private void ProcessCustom()
@@ -105,7 +105,14 @@ namespace Cookie.LUA
                 return;
             }
 
-            script.Call(script.Globals[_currentMapTable.Get("custom").String]);
+            if(_currentMapTable.Get("custom").Type != DataType.Function)
+            {
+                Logger.Default.Log("Une erreur est présente dans votre script, fonction custom mal configurée.");
+                ProcessFight();
+                return;
+            }
+
+            _currentMapTable.Get("custom").Function.Call();
             if (!WaitingForMapChange)
             {
                 ProcessFight();
