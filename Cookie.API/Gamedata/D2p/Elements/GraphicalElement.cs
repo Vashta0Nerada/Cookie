@@ -1,5 +1,6 @@
 ﻿using System;
 using Cookie.API.Utils.IO;
+using System.Drawing;
 
 namespace Cookie.API.Gamedata.D2p.Elements
 {
@@ -16,6 +17,8 @@ namespace Cookie.API.Gamedata.D2p.Elements
         public double OffsetY;
         public double PixelOffsetX;
         public double PixelOffsetY;
+        public Point Offset;
+        public Point PixelOffset;
 
         public ColorMultiplicator Shadow;
 
@@ -39,6 +42,10 @@ namespace Cookie.API.Gamedata.D2p.Elements
                 OffsetX = PixelOffsetX / 43;
                 OffsetY = PixelOffsetY / 21.5;
             }
+
+            Offset = new Point((int)OffsetX, (int)OffsetY);
+            PixelOffset = new Point((int)PixelOffsetX, (int)PixelOffsetY);
+
             Altitude = Reader.ReadSByte();
             Identifier = Convert.ToInt32(Reader.ReadUInt());
         }

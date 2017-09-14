@@ -13,10 +13,10 @@ namespace Cookie.LUA.Commands
     [MoonSharpUserData]
     class BaseLUA
     {
-        public DataLUA Data;
+        protected DataLUA _data;
         public BaseLUA(DataLUA data)
         {
-            Data = data;
+            _data = data;
         }
     }
 }

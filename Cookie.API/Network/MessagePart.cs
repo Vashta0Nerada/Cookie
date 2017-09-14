@@ -21,6 +21,8 @@ namespace Cookie.API.Network
 
         public int? Length { get; private set; }
 
+        private byte[] firstBatch;
+
         public byte[] Data
         {
             get => _data;
@@ -46,6 +48,7 @@ namespace Cookie.API.Network
                         "Malformated Message Header, invalid bytes number to read message length (inferior to 0 or superior to 3)");
 
                 Length = 0;
+                firstBatch = reader.Data;
 
                 // 3..0 or 2..0 or 1..0
                 for (var i = LengthBytesCount.Value - 1; i >= 0; i--)
@@ -66,7 +69,8 @@ namespace Cookie.API.Network
                     Data = reader.ReadBytes((int) reader.BytesAvailable);
             }
             //second case : the message was split and it missed some bytes
-            if (Data == null || !Length.HasValue || !(Data.Length < Length)) return IsValid;
+            if (Data == null || !Length.HasValue || !(Data.Length < Length))
+                return IsValid;
             var bytesToRead = 0;
 
             // still miss some bytes ...
@@ -77,11 +81,16 @@ namespace Cookie.API.Network
             else if (Data.Length + reader.BytesAvailable >= Length)
                 bytesToRead = Length.Value - Data.Length;
 
-            if (bytesToRead == 0) return IsValid;
+            if (bytesToRead == 0)
+                return IsValid;
             var oldLength = Data.Length;
+            long btread = reader.BytesAvailable;
             Array.Resize(ref _data, Data.Length + bytesToRead);
             Array.Copy(reader.ReadBytes(bytesToRead), 0, Data, oldLength, bytesToRead);
 
+            Console.WriteLine("Old length = " + oldLength.ToString() + " new length = " + Data.Length.ToString() + " total length = " + Length.ToString() + "bytesToRead = " + btread.ToString() + "=" + bytesToRead.ToString());
+            if (Data.Length == 40015)
+                ;
             return IsValid;
         }
     }

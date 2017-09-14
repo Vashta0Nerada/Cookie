@@ -1,12 +1,6 @@
 ﻿using MoonSharp.Interpreter;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cookie.API.Game.Map;
 using System.Threading;
-using Cookie.API.Utils;
 
 namespace Cookie.LUA.Commands
 {
@@ -18,23 +12,24 @@ namespace Cookie.LUA.Commands
 
         public MapLUA(DataLUA data) : base(data)
         {
-            this._messageReceived = new AutoResetEvent(false);
+            _messageReceived = new AutoResetEvent(false);
         }
 
-        public int MapID
-        {
-            get { return Data.Account.Character.Map.Id; }
-        }
+        public int Id => _data.Account.Character.Map.Id;
+        public int X => _data.Account.Character.Map.X;
+        public int Y => _data.Account.Character.Map.Y;
+        public int WorldId => _data.Account.Character.Map.WorldId;
+        public int SubAreaId => _data.Account.Character.Map.SubAreaId;
 
         public bool GoToCell(int cell)
         {
             if (cell <= 0 || cell >= 560) return false;
             GoToCell_Result = false;
-            var movement = Data.Account.Character.Map.MoveToCell(cell);
+            var movement = _data.Account.Character.Map.MoveToCell(cell);
             movement.MovementFinished += GoToCell_OnMovementFinished;
             movement.PerformMovement();
             
-            this._messageReceived.WaitOne(10000);
+            _messageReceived.WaitOne(10000);
 
             return GoToCell_Result;
         }
@@ -43,33 +38,33 @@ namespace Cookie.LUA.Commands
         {
             GoToCell_Result = e.Sucess;
 
-            this._messageReceived.Set();
+            _messageReceived.Set();
         }
 
-        public void ChangeMap(string direction, int cellID = -1)
+        public void ChangeMap(string direction, int cellId = -1)
         {
             IMapChangement move = null;
             switch (direction)
             {
                 case "top":
                 case "up":
-                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.North, cellID);
+                    move = _data.Account.Character.Map.ChangeMap(MapDirectionEnum.North, cellId);
                     break;
                 case "left":
-                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.West, cellID);
+                    move = _data.Account.Character.Map.ChangeMap(MapDirectionEnum.West, cellId);
                     break;
                 case "right":
-                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.East, cellID);
+                    move = _data.Account.Character.Map.ChangeMap(MapDirectionEnum.East, cellId);
                     break;
                 case "bottom":
                 case "down":
-                    move = Data.Account.Character.Map.ChangeMap(MapDirectionEnum.South, cellID);
+                    move = _data.Account.Character.Map.ChangeMap(MapDirectionEnum.South, cellId);
                     break;
             }
 
             if (move == null) return;
             move.PerformChangement();
-            Data.Account.Character.ScriptManager.WaitingForMapChange = true;
+            _data.Account.Character.ScriptManager.WaitingForMapChange = true;
         }
     }
 }

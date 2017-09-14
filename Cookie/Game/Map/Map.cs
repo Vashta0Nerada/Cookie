@@ -93,7 +93,7 @@ namespace Cookie.Game.Map
                     foreach (var layerElement in cell.Elements)
                     {
                         if (!(layerElement is GraphicalElement l)) continue;
-                        if (l.Identifier == interactiveElements.Id)
+                        if (l.Identifier == interactiveElements.Id && l.Offset == Point.Empty && l.PixelOffset == Point.Empty)
                             usableElements.Add((int) interactiveElements.Id,
                                 new UsableElement(cell.CellId, interactiveElements,
                                     interactiveElements.EnabledSkills));

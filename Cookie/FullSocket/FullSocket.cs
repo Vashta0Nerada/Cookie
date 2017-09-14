@@ -117,12 +117,12 @@ namespace Cookie.FullSocket
                     var tuple = _mTickets[ticket];
                     _mTickets.Remove(ticket);
 
-                    // Reconnect to selected server
-                    fs.Account.Network.Start();
-
                     // Handle Message on World Client
                     fs.Disconnected += OnWorldClientDisconnected;
                     fs.MessageReceived += OnWorldClientMessageReceived;
+
+                    // Reconnect to selected server
+                    fs.Account.Network.Start();
                     try
                     {
                         fs.Server.Reconnect(tuple.Item2.Address, tuple.Item2.Port);
@@ -142,6 +142,7 @@ namespace Cookie.FullSocket
 
         private static void OnWorldClientDisconnected(Client client)
         {
+            Logger.Default.Log("World client disconnected.");
             var fs = client as ConnectionFullSocket;
 
             fs?.Account.Network?.AddMessage(fs.Account.Network.Dispose);
@@ -149,6 +150,7 @@ namespace Cookie.FullSocket
 
         private void OnAuthClientMessageReceived(Client client, NetworkMessage message)
         {
+            Console.WriteLine("Message recieved in FullSocket : " + message.GetType().ToString());
             if (!(client is ConnectionFullSocket))
                 throw new ArgumentException("client is not of type ConnectionFullSocket");
 

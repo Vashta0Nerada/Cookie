@@ -51,11 +51,14 @@ namespace Cookie.Game.Jobs
 
         private void HandleInteractiveUseEndedMessage(IAccount arg1, InteractiveUseEndedMessage arg2)
         {
-            Gather();
+            Logger.Default.Log("HandleInteractiveUseEndedMessage", API.Utils.Enums.LogMessageType.Error);
+            _account.PerformAction(Gather, 1000);
         }
 
         private void HandleInteractiveUseErrorMessage(IAccount arg1, InteractiveUseErrorMessage arg2)
         {
+            Logger.Default.Log("HandleInteractiveUseErrorMessage", API.Utils.Enums.LogMessageType.Error);
+            _account.PerformAction(Gather, 1000);
             if (IsFinished)
                 return;
             if(ErrorCount >= 3)
@@ -102,7 +105,8 @@ namespace Cookie.Game.Jobs
 
         public void Gather(List<int> @params, bool autoGather, bool resetCounters = false)
         {
-            if(resetCounters)
+            Logger.Default.Log("Gather param called");
+            if (resetCounters)
             {
                 ErrorCount = 0;
                 IsFinished = false;
@@ -191,6 +195,7 @@ namespace Cookie.Game.Jobs
 
         public void Gather()
         {
+            Logger.Default.Log("Gather empty called");
             Gather(ToGather, AutoGather);
         }
 

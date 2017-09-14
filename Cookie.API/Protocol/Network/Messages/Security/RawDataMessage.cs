@@ -1,4 +1,5 @@
 ﻿using Cookie.API.Utils.IO;
+using System;
 
 namespace Cookie.API.Protocol.Network.Messages.Security
 {
@@ -8,11 +9,13 @@ namespace Cookie.API.Protocol.Network.Messages.Security
 
         public RawDataMessage()
         {
+            Console.WriteLine("Raw data crated");
         }
 
         public RawDataMessage(byte[] content)
         {
             Content = content;
+            Console.WriteLine("Raw data crated");
         }
 
         public override ushort MessageID => ProtocolId;

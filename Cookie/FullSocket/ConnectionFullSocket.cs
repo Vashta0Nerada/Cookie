@@ -63,6 +63,7 @@ namespace Cookie.FullSocket
 
         protected override void OnMessageReceived(NetworkMessage message)
         {
+            Console.WriteLine("Recieved message : " + message.GetType().ToString());
             message.From = ListenerEntry.Client;
             message.Destinations = ListenerEntry.Server | ListenerEntry.Local;
 
@@ -80,6 +81,7 @@ namespace Cookie.FullSocket
 
         public override void Send(NetworkMessage message)
         {
+            Console.WriteLine("Sending message CFS : " + message.GetType().ToString());
             if (message.Destinations.HasFlag(ListenerEntry.Server))
                 SendToServer(message);
             if (message.Destinations.HasFlag(ListenerEntry.Client))

@@ -21,5 +21,15 @@ namespace Cookie.LUA.Commands
         {
             Logger.Default.Log(str);
         }
+
+        public void LogInfo(string str)
+        {
+            Logger.Default.Log(str, API.Utils.Enums.LogMessageType.Info);
+        }
+
+        public void LogError(string str)
+        {
+            Logger.Default.Log(str, API.Utils.Enums.LogMessageType.Error);
+        }
     }
 }

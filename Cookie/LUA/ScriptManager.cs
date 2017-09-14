@@ -19,30 +19,36 @@ namespace Cookie.LUA
     {
         public int waitTime = 500;
 
-        private string scriptPath;
-        private Script script;
-        private DataLUA data;
+        private string _scriptPath;
+        private Script _script;
+        private DataLUA _data;
+        private int _bankPercent { get { return _script.Globals.Get("BANK_PERCENT").IsNil() ? 0 : (int)_script.Globals.Get("BANK_PERCENT").Number; } }
 
-        private MapLUA map;
-        private LoggerLUA logger;
+        private MapLUA _map;
+        private LoggerLUA _logger;
+        private InventoryLUA _inventory;
         private System.Timers.Timer _processTimer;
         private Table _currentMapTable;
 
         public bool ScriptLoaded;
         public bool WaitingForMapChange { get; set; }
+        public bool GoingToBank { get; set; }
 
         public ScriptManager(IAccount account, ICharacter character)
         {
             ScriptLoaded = false;
             WaitingForMapChange = false;
-            data = new DataLUA(account);
+            GoingToBank = false;
+            _data = new DataLUA(account);
 
-            map = new MapLUA(data);
-            logger = new LoggerLUA(data);
+            _map = new MapLUA(_data);
+            _logger = new LoggerLUA(_data);
+            _inventory = new InventoryLUA(_data);
 
-            script = new Script();
-            script.Globals["Map"] = map;
-            script.Globals["Logger"] = logger;
+            _script = new Script();
+            _script.Globals["Map"] = _map;
+            _script.Globals["Logger"] = _logger;
+            _script.Globals["Inventory"] = _inventory;
 
             character.Map.MapChanged += MapChanged;
             character.GatherManager.GatherFinished += GatherFinished;
@@ -50,13 +56,41 @@ namespace Cookie.LUA
             _processTimer.Elapsed += processMove;
         }
 
+        public void LoadScript(string str)
+        {
+            _scriptPath = str;
+            LoadScriptInternal();
+            ScriptLoaded = true;
+        }
+
+        private void LoadScriptInternal()
+        {
+            try
+            {
+                _script.DoFile(_scriptPath);
+            }
+            catch (SyntaxErrorException ex)
+            {
+                Logger.Default.Log("Erreur dans le script : \n" + ex.DecoratedMessage, API.Utils.Enums.LogMessageType.Error);
+            }
+            catch (Exception ex)
+            {
+                Logger.Default.Log("Erreur lors du chargement du script : \n" + ex.Message, API.Utils.Enums.LogMessageType.Error);
+            }
+
+            if (_script.Globals.Get("BANK_PERCENT").IsNil())
+            {
+                Logger.Default.Log("Aucun paramètre trouvé pour BANK_PERCENT, retour en banque désactivé.");
+            }
+        }
+
         private void GatherFinished(object sender, EventArgs e)
         {
             if (!ScriptLoaded)
                 return;
 
-            Logger.Default.Log("Récolte sur la carte terminée.");
-            ProcessDoor();
+            Logger.Default.Log("Récolte sur la carte terminée.", API.Utils.Enums.LogMessageType.Info);
+            _data.Account.PerformAction(ProcessDoor, 2000);
         }
 
         private void MapChanged(object sender, MapChangedEventArgs e)
@@ -74,12 +108,46 @@ namespace Cookie.LUA
             _currentMapTable = null;
             WaitingForMapChange = false;
 
-            DynValue val = script.Call(script.Globals["move"]);
+            if (!GoingToBank && _bankPercent != 0 && _data.Account.Character.WeightPercentage >= _bankPercent)
+            {
+                GoingToBank = true;
+                Logger.Default.Log("Inventaire rempli à " + _data.Account.Character.WeightPercentage.ToString() + "%, retour en banque.", API.Utils.Enums.LogMessageType.Info);
+            }
+
+            if (GoingToBank && (_bankPercent == 0 || _data.Account.Character.WeightPercentage < _bankPercent))
+            {
+                GoingToBank = false;
+                Logger.Default.Log("Fin du retour en banque.", API.Utils.Enums.LogMessageType.Info);
+            }
+
+            DynValue val;
+            if (GoingToBank)
+            {
+                if (_script.Globals.Get("bank").IsNil())
+                {
+                    Logger.Default.Log("Aucune fonction bank trouvée.", API.Utils.Enums.LogMessageType.Error);
+                    return;
+                }
+
+                val = _script.Call(_script.Globals["bank"]);
+            }
+            else
+            {
+                if (_script.Globals.Get("move").IsNil())
+                {
+                    Logger.Default.Log("Aucune fonction move trouvée.", API.Utils.Enums.LogMessageType.Error);
+                    return;
+                }
+
+                val = _script.Call(_script.Globals["move"]);
+            }
+
+            
             Table matching = null;
-            Logger.Default.Log(data.Account.Character.Map.Id.ToString());
+            Logger.Default.Log(_data.Account.Character.Map.Id.ToString());
             foreach (var item in val.Table.Values)
             {
-                if (item.Table.Get("map").String == data.Account.Character.Map.Id.ToString() || Regex.IsMatch(item.Table.Get("map").String, "^ ?" + data.Account.Character.Map.X.ToString() + " ?, ?" + data.Account.Character.Map.Y.ToString()))
+                if (item.Table.Get("map").String == _data.Account.Character.Map.Id.ToString() || Regex.IsMatch(item.Table.Get("map").String, "^ ?" + _data.Account.Character.Map.X.ToString() + " ?, ?" + _data.Account.Character.Map.Y.ToString() + " ?$"))
                 {
                     matching = item.Table;
                     break;
@@ -88,13 +156,13 @@ namespace Cookie.LUA
 
             if (matching == null)
             {
-                Logger.Default.Log("Carte non gérée par le script.");
+                Logger.Default.Log("Carte non gérée par le script.", API.Utils.Enums.LogMessageType.Error);
                 return;
             }
 
             _currentMapTable = matching;
 
-            data.Account.PerformAction(ProcessCustom, 10);
+            _data.Account.PerformAction(ProcessCustom, 10);
         }
 
         private void ProcessCustom()
@@ -121,7 +189,7 @@ namespace Cookie.LUA
 
         private void ProcessFight()
         {
-            if (_currentMapTable.Get("fight").IsNil() || !_currentMapTable.Get("fight").Boolean)
+            if (GoingToBank || _currentMapTable.Get("fight").IsNil() || !_currentMapTable.Get("fight").Boolean)
             {
                 ProcessGather();
                 return;
@@ -133,26 +201,26 @@ namespace Cookie.LUA
 
         private void ProcessGather()
         {
-            if(_currentMapTable.Get("gather").IsNil() || !_currentMapTable.Get("gather").Boolean)
+            if(GoingToBank || _currentMapTable.Get("gather").IsNil() || !_currentMapTable.Get("gather").Boolean)
             {
                 ProcessDoor();
                 return;
             }
 
-            if(script.Globals.Get("GATHER").IsNil())
+            if(_script.Globals.Get("GATHER").IsNil())
             {
                 Logger.Default.Log("Empty GATHER is not implemented yet.");
                 ProcessDoor();
                 return;
             }
             List<int> list = new List<int>();
-            foreach (var ressource in script.Globals.Get("GATHER").Table.Values)
+            foreach (var ressource in _script.Globals.Get("GATHER").Table.Values)
             {
                 list.Add(Convert.ToInt32(ressource.Number));
             }
 
             Logger.Default.Log("Démarrage de la récolte des éléments suivants : " + string.Join(", ", list) + ".");
-            data.Account.Character.GatherManager.Gather(list, false, true);
+            _data.Account.Character.GatherManager.Gather(list, false, true);
         }
 
         private void ProcessDoor()
@@ -164,8 +232,8 @@ namespace Cookie.LUA
             }
 
             Logger.Default.Log("Door is not implemented yet.");
-            var door = data.Account.Character.Map.Doors[(int)_currentMapTable.Get("door").Number];
-            data.Account.Character.Map.UseElement((int) door.Id, door.EnabledSkills[0].SkillInstanceUid);
+            var door = _data.Account.Character.Map.Doors[(int)_currentMapTable.Get("door").Number];
+            _data.Account.Character.Map.UseElement((int) door.Id, door.EnabledSkills[0].SkillInstanceUid);
             ProcessPath();
         }
 
@@ -197,7 +265,7 @@ namespace Cookie.LUA
                 }
 
                 Logger.Default.Log("Déplacement dans la direction " + dir + (cell == -1 ? "" : (" en empruntant la cellid " + cell.ToString())) + ".");
-                map.ChangeMap(dir, cell);
+                _map.ChangeMap(dir, cell);
                 return;
             }
             else
@@ -205,7 +273,7 @@ namespace Cookie.LUA
                 int cell = Convert.ToInt32(dir);
                 if (cell > 0 && cell < 560)
                 {
-                    var movement = data.Account.Character.Map.MoveToCell(cell);
+                    var movement = _data.Account.Character.Map.MoveToCell(cell);
                     Logger.Default.Log("Déplacement vers la cellid " + cell.ToString() + ".");
                     movement.PerformMovement();
                     return;
@@ -213,29 +281,6 @@ namespace Cookie.LUA
             }
 
             Logger.Default.Log("Aucune action réalisée");
-        }
-
-        public void LoadScript(string str)
-        {
-            scriptPath = str;
-            LoadScriptInternal();
-            ScriptLoaded = true;
-        }
-
-        private void LoadScriptInternal()
-        {
-            try
-            {
-                script.DoFile(scriptPath);
-            }
-            catch (SyntaxErrorException ex)
-            {
-                Logger.Default.Log("Erreur dans le script : \n" + ex.DecoratedMessage);
-            }
-            catch (Exception ex)
-            {
-                Logger.Default.Log("Erreur lors du chargement du script : \n" + ex.Message);
-            }
         }
 
         public void TerminateScript()

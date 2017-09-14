@@ -95,7 +95,11 @@ namespace Cookie.API.Network
                         _currentMessage = new MessagePart();
 
                     // if message is complete
-                    if (!_currentMessage.Build(buffer)) continue;
+                    if (!_currentMessage.Build(buffer))
+                    {
+                        Console.WriteLine("Not ripe yet.");
+                        continue;
+                    }
                     var messageDataReader = new BigEndianReader(_currentMessage.Data);
                     if (_currentMessage.MessageId != null)
                     {
@@ -204,6 +208,7 @@ namespace Cookie.API.Network
 
         private void OnReceiveCompleted(object sender, SocketAsyncEventArgs args)
         {
+            Console.WriteLine("OP : " + args.LastOperation.ToString());
             switch (args.LastOperation)
             {
                 case SocketAsyncOperation.Receive:
