@@ -40,5 +40,10 @@ namespace Cookie.LUA.Commands
 
             return count;
         }
+
+        public void DeleteItem(int itemid)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

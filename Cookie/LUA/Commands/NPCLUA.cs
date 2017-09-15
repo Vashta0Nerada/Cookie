@@ -8,6 +8,9 @@ using Cookie.API.Protocol.Network.Messages.Game.Dialog;
 using Cookie.LUA.Objects;
 using Cookie.API.Utils;
 using System.Threading;
+using Cookie.API.Gamedata.D2i;
+using Cookie.API.Gamedata.D2o;
+using Cookie.API.Datacenter;
 
 namespace Cookie.LUA.Commands
 {
@@ -17,10 +20,24 @@ namespace Cookie.LUA.Commands
         private AutoResetEvent _messageReceived;
 
         public bool InDialog;
+        public uint LastMessageID;
         public List<NpcReplyLUA> PossibleReplies;
+        public string Name => FastD2IReader.Instance.GetText(_currentNpc?.NameId);
+        public string Dialog
+        {
+            get
+            {
+                if (LastMessageID == 0)
+                    return "";
+                return FastD2IReader.Instance.GetText(ObjectDataManager.Instance.Get<API.Datacenter.NpcMessage>(LastMessageID).MessageId);
+            }
+        }
+
+        private Npc _currentNpc;
 
         public NpcLUA(DataLUA data) : base(data)
         {
+            LastMessageID = 0;
             InDialog = false;
             PossibleReplies = new List<NpcReplyLUA>();
 
@@ -45,12 +62,14 @@ namespace Cookie.LUA.Commands
 
         private void OnNpcDialogQuestionMessage(IAccount arg1, NpcDialogQuestionMessage dialogQuestion)
         {
-            List<NpcReplyLUA> list = new List<NpcReplyLUA>();
+            PossibleReplies = new List<NpcReplyLUA>();
             foreach (var replyid in dialogQuestion.VisibleReplies)
             {
-                list.Add(new NpcReplyLUA((int)replyid));
+                PossibleReplies.Add(new NpcReplyLUA((int)replyid, _currentNpc));
             }
-
+            
+            LastMessageID = dialogQuestion.MessageId;
+            Console.WriteLine(LastMessageID.ToString());
             InDialog = true;
             _messageReceived.Set();
         }
@@ -59,13 +78,13 @@ namespace Cookie.LUA.Commands
         {
             InDialog = false;
             PossibleReplies = new List<NpcReplyLUA>();
+            Logger.Default.Log("Personnage a terminé la discussion avec le NPC " + Name + ".", API.Utils.Enums.LogMessageType.Info);
             _messageReceived.Set();
         }
 
         private void OnNpcDialogCreationMessage(IAccount arg1, NpcDialogCreationMessage arg2)
         {
-            InDialog = true;
-            Logger.Default.Log("Personnage en discussion avec le NPC " + arg2.NpcId.ToString() + ".", API.Utils.Enums.LogMessageType.Info);
+            Logger.Default.Log("Le personnage est en discussion avec le NPC " + Name + ".", API.Utils.Enums.LogMessageType.Info);
         }
 
         /// <summary>
@@ -76,6 +95,12 @@ namespace Cookie.LUA.Commands
         /// <returns>True if a reply is expected, False otherwise</returns>
         public bool Talk(double npcid, int action = 3)
         {
+            if (InDialog)
+            {
+                Logger.Default.Log("Impossible de lancer un dialogue, vous êtes déjà en conversation avec " + Name + " .", API.Utils.Enums.LogMessageType.Error);
+                return false;
+            }
+
             InDialog = false;
 
             var Npc = _data.Account.Character.Map.Npcs.Find(npc => npc.Id == npcid);
@@ -85,14 +110,18 @@ namespace Cookie.LUA.Commands
                 return false;
             }
 
-            var npcUId = Convert.ToInt32(Npc.NpcId);
-            var npcMapId = Convert.ToInt32(Npc.Id);
-            var npcActionId = (byte)action;
+            _currentNpc = ObjectDataManager.Instance.Get<Npc>(Npc.NpcId);
+
+            if (!_currentNpc.Actions.Contains((uint)action))
+            {
+                Logger.Default.Log("Impossible d'effectuer l'action " + FastD2IReader.Instance.GetText(ObjectDataManager.Instance.Get<NpcAction>(action).NameId) + " avec ce NPC.", API.Utils.Enums.LogMessageType.Error);
+                return false;
+            }
 
             var message = new NpcGenericActionRequestMessage
             {
-                NpcId = npcMapId,
-                NpcActionId = npcActionId,
+                NpcId = (int)Npc.Id,
+                NpcActionId = (byte)action,
                 NpcMapId = _data.Account.Character.MapId
             };
 
@@ -131,6 +160,16 @@ namespace Cookie.LUA.Commands
 
             _messageReceived.WaitOne(5000);
             return InDialog;
+        }
+
+        public bool LeaveDialog()
+        {
+            var message = new LeaveDialogRequestMessage();
+
+            _data.Account.Network.SendToServer(message);
+
+            _messageReceived.WaitOne(5000);
+            return !InDialog;
         }
     }
 }

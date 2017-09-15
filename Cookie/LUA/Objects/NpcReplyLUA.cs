@@ -1,4 +1,5 @@
-﻿using Cookie.API.Gamedata.D2i;
+﻿using Cookie.API.Datacenter;
+using Cookie.API.Gamedata.D2i;
 using Cookie.API.Gamedata.D2o;
 using MoonSharp.Interpreter;
 using System;
@@ -13,12 +14,20 @@ namespace Cookie.LUA.Objects
     class NpcReplyLUA
     {
         public int Id;
-        public string Message => FastD2IReader.Instance.GetText(ObjectDataManager.Instance.Get<API.Datacenter.NpcMessage>(Id)
-             .MessageId);
+        public string Message
+        {
+            get
+            {
+                return FastD2IReader.Instance.GetText(_npc.DialogReplies.Find(rep => rep[0] == Id)[1]);
+            }
+        }
 
-        public NpcReplyLUA(int id)
+        private Npc _npc;
+
+        public NpcReplyLUA(int id, Npc npc)
         {
             Id = id;
+            _npc = npc;
         }
     }
 }

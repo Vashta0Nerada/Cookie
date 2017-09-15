@@ -27,6 +27,9 @@ namespace Cookie.LUA
         private MapLUA _map;
         private LoggerLUA _logger;
         private InventoryLUA _inventory;
+        private NpcLUA _npc;
+        private GlobalLUA _global;
+        private PlayerLUA _player;
         private System.Timers.Timer _processTimer;
         private Table _currentMapTable;
 
@@ -44,16 +47,22 @@ namespace Cookie.LUA
             _map = new MapLUA(_data);
             _logger = new LoggerLUA(_data);
             _inventory = new InventoryLUA(_data);
+            _npc = new NpcLUA(_data);
+            _global = new GlobalLUA(_data);
+            _player = new PlayerLUA(_data);
 
             _script = new Script();
             _script.Globals["Map"] = _map;
             _script.Globals["Logger"] = _logger;
             _script.Globals["Inventory"] = _inventory;
+            _script.Globals["Npc"] = _npc;
+            _script.Globals["Global"] = _global;
+            _script.Globals["Player"] = _player;
 
             character.Map.MapChanged += MapChanged;
             character.GatherManager.GatherFinished += GatherFinished;
             _processTimer = new System.Timers.Timer(waitTime);
-            _processTimer.Elapsed += processMove;
+            _processTimer.Elapsed += ProcessMove;
         }
 
         public void LoadScript(string str)
@@ -102,7 +111,7 @@ namespace Cookie.LUA
             _processTimer.Start();
         }
 
-        private void processMove(object sender, ElapsedEventArgs e)
+        public void ProcessMove(object sender = null, ElapsedEventArgs e = null)
         {
             _processTimer.Stop();
             _currentMapTable = null;
@@ -180,7 +189,15 @@ namespace Cookie.LUA
                 return;
             }
 
-            _currentMapTable.Get("custom").Function.Call();
+            try
+            {
+                _currentMapTable.Get("custom").Function.Call();
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                Logger.Default.Log("Une erreur est survenue lors de l'exécution de la custom : \n" + ex.DecoratedMessage);
+            }
+            
             if (!WaitingForMapChange)
             {
                 ProcessFight();

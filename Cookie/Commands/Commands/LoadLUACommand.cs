@@ -13,6 +13,7 @@ namespace Cookie.Commands.Commands
         public void OnCommand(IAccount account, string[] args)
         {
             account.Character.ScriptManager.LoadScript(args[0]);
+            account.Character.ScriptManager.ProcessMove();
         }
     }
 }

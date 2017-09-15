@@ -1,6 +1,9 @@
 ﻿using MoonSharp.Interpreter;
 using Cookie.API.Game.Map;
 using System.Threading;
+using Cookie.Game.Map.Elements;
+using Cookie.API.Game.Map.Elements;
+using Cookie.API.Utils;
 
 namespace Cookie.LUA.Commands
 {
@@ -65,6 +68,23 @@ namespace Cookie.LUA.Commands
             if (move == null) return;
             move.PerformChangement();
             _data.Account.Character.ScriptManager.WaitingForMapChange = true;
+        }
+
+        public bool UseInteractiveObject(int elementId)
+        {
+            IInteractiveElement el;
+            if (!_data.Account.Character.Map.InteractiveElements.TryGetValue(elementId, out el)) {
+                Logger.Default.Log("Impossible de trouver l'élément " + elementId.ToString() + "sur cette carte.", API.Utils.Enums.LogMessageType.Error);
+                return false;
+            }
+
+            if (!el.IsUsable) {
+                Logger.Default.Log("Impossible d'utiliser l'élément " + elementId.ToString() + ".", API.Utils.Enums.LogMessageType.Error);
+                return false;
+            }
+
+            _data.Account.Character.Map.UseElement((int)el.Id, el.EnabledSkills[0].SkillInstanceUid);
+            return true;
         }
     }
 }

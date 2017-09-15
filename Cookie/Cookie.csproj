@@ -113,10 +113,12 @@
     <Compile Include="Core\Pathmanager\PathManager.cs" />
     <Compile Include="Core\Character.cs" />
     <Compile Include="LUA\Commands\BaseLUA.cs" />
+    <Compile Include="LUA\Commands\GlobalLUA.cs" />
     <Compile Include="LUA\Commands\InventoryLUA.cs" />
     <Compile Include="LUA\Commands\LoggerLUA.cs" />
     <Compile Include="LUA\Commands\MapLUA.cs" />
     <Compile Include="LUA\Commands\NpcLUA.cs" />
+    <Compile Include="LUA\Commands\PlayerLUA.cs" />
     <Compile Include="LUA\DataLUA.cs" />
     <Compile Include="LUA\Objects\ItemLUA.cs" />
     <Compile Include="LUA\Objects\NpcReplyLUA.cs" />

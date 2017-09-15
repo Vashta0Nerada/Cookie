@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace Cookie.API.Core
 {
@@ -16,5 +17,6 @@ namespace Cookie.API.Core
         /// <param name="filePath"></param>
         /// <returns></returns>
         void LoadScript(string filePath);
+        void ProcessMove(object sender = null, ElapsedEventArgs e = null);
     }
 }
